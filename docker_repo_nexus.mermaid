@@ -1,0 +1,21 @@
+---
+title: Create Docker Repository on Nexus and Push to It
+---
+flowchart TD
+    B[Setup DigitalOcean Droplet]
+    B --> C[Install & Configure Nexus]
+    C --> D[Create Docker Hosted Repository]
+    D --> E[Create Docker Repository Role]
+    E --> F[Configure Security Settings]
+    
+    subgraph Configuration
+    G[Configure Docker for Nexus]
+    H[Build Docker Image]
+    I[Push Image to Nexus Repository]
+    end
+    
+    F --> G
+    G --> H
+    H --> I
+
+    style Configuration fill:#f0f0f0,stroke:#333,stroke-width:2px
