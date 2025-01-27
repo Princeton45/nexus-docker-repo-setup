@@ -2,7 +2,7 @@
 
 This outlines my experience setting up a private Docker repository on Nexus and configuring everything to be able to push Docker images to it. I'll walk you through the key steps I took/
 
-![Diagram](https://github.com/Princeton45/nexus-droplet-setup/blob/main/images/diagram.jpg)
+![Diagram](https://github.com/Princeton45/nexus-docker-repo-setup/blob/main/images/diagram.jpg)
 
 ## Technologies I Used
 
