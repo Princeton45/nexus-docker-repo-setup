@@ -32,7 +32,7 @@ I then created a new role within Nexus specifically for managing access to my Do
 
 Then, I created a new user and attached the role to the user.
 
-![attached](https://github.com/Princeton45/nexus-docker-repo-setup/blob/main/images/attached-role.png)
+![attached](https://github.com/Princeton45/nexus-docker-repo-setup/blob/main/images/attach-role.png)
 
 ### 4. Add HTTP connector for Docker Repo on Nexus
 
