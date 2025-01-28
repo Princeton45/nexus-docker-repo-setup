@@ -17,43 +17,76 @@ Here's how I got everything working:
 
 ### 1. Created a Docker Hosted Repository on Nexus
 
-First, I logged into my Nexus server's web UI and created a new **hosted** Docker repository. This is where my Docker images will be stored. I made sure to enable the "HTTP" connector on a specific port, and to check "Allow anonymous docker pull", so I can test pulling images without needing to log in.
+First, I logged into my Nexus server's web UI and created a new **hosted** Docker repository. This is where my Docker images will be stored. 
 
-*   **Suggestions for Visuals:**
-    *   **Picture 1:** A screenshot of the Nexus UI showing the "Create repository" page, highlighting the settings for the new Docker hosted repository, especially the HTTP port.
-    *   **Picture 2:** The Nexus UI showing the newly created Docker repository in the list of repositories.
+![docker_repo](https://github.com/Princeton45/nexus-docker-repo-setup/blob/main/images/docker_repo.png)
+
 
 ### 2. Created a Docker Repository Role on Nexus
 
 I then created a new role within Nexus specifically for managing access to my Docker repository. I granted this role the necessary privileges to push and pull images.
 
-*   **Suggestions for Visuals:**
-    *   **Picture 3:** A screenshot of the Nexus UI showing the "Create role" page, with the privileges for the Docker repository role selected.
+![docker_role](https://github.com/Princeton45/nexus-docker-repo-setup/blob/main/images/docker_role.png)
 
-### 3. Created a Docker Repository user on Nexus
+### 3. Added the new role to the Nexus user account
 
-Then, I created a new user that has the role I just created.
+Then, I created a new user and attached the role to the user.
 
-*   **Suggestions for Visuals:**
-    *   **Picture 4:** A screenshot of the Nexus UI showing the "Create User" page, with the role added for the Docker repository user selected.
+![attached](https://github.com/Princeton45/nexus-docker-repo-setup/blob/main/images/attached-role.png)
 
-### 4. Configured the DigitalOcean Droplet and Docker for Pushing
+### 4. Add HTTP connector for Docker Repo on Nexus
 
-This was the trickiest part. I needed to configure my DigitalOcean Droplet (where Nexus is running) and my local Docker setup to allow pushing to the new repository. This involved modifying the Docker daemon settings on my local machine to add an insecure registry entry for my Nexus server, since I'm using HTTP for now. Then I logged in to my Nexus server through docker login.
+Docker requires explicit HTTP configuration because by default it only accepts secure HTTPS connections for registry communication as a security measure.
 
-*   **Suggestions for Visuals:**
-    *   **Picture 5:** My terminal showing the `docker login` command I used to authenticate with my Nexus server using the created user.
+Since we're not using HTTPS, we need to specifically configure both Docker and Nexus to allow insecure registry connections (HTTP)
 
-### 5. Built and Pushed a Docker Image
+We will use `8083` as the port that the Docker repository will listen on.
 
-Finally, I built a Docker image on my local machine and tagged it appropriately to point to my Nexus Docker repository. Then, using the `docker push` command, I pushed the image to the repository.
+The Docker repository cannot listen on port `8081` because that port is typically reserved for Nexus's main web interface/API
 
-*   **Suggestions for Visuals:**
-    *   **Picture 6:** My terminal showing the `docker build` command used to build a sample Docker image.
-    *   **Picture 7:** My terminal showing the `docker tag` command used to tag the image for my Nexus repository.
-    *   **Picture 8:** My terminal showing the `docker push` command successfully pushing the image to Nexus.
-    *   **Picture 9:** The Nexus UI showing the newly pushed Docker image in my hosted repository.
+![attached](https://github.com/Princeton45/nexus-docker-repo-setup/blob/main/images/8083.png)
 
-## Conclusion
+### 5. Open port 8083 on Droplet
 
-And that's it! I now have a fully functional private Docker repository on my Nexus server. I can build Docker images locally and push them to this repository, making them available for deployment or sharing. This setup greatly improves my workflow for managing Docker images. I hope sharing my experience helps you in setting up your own private Docker repositories! Feel free to reach out if you have any questions. Happy coding!
+We now need to open the port `8083` on the Digital Ocean Droplet (VM)
+
+![firewall](https://github.com/Princeton45/nexus-docker-repo-setup/blob/main/images/firewall.png)
+
+
+### 6. Configure Docker Realm in Nexus
+
+We now need to configure the Docker Bearer Token Realm in Nexus Security Realms to allow Docker authentication to work properly. 
+
+Without enabling this realm, Docker clients won't be able to authenticate with the Nexus repository, even if the repository itself is properly configured.
+
+![realm](https://github.com/Princeton45/nexus-docker-repo-setup/blob/main/images/docker_realm.png)
+
+### 7. Allow insecure repository in Docker
+ 
+ We will need to configure the `insecure-registries` option in Docker. Without this configuration, Docker will refuse to push or pull images from the Docker hosted repository since we're using HTTP.
+
+This is necessary because Docker requires HTTPS by default for security reasons.
+
+I edited the `Docker Engine` config in my Docker desktop to add the `insecure-registries` parameter
+
+![insecure-reg](https://github.com/Princeton45/nexus-docker-repo-setup/blob/main/images/insecure-reg.png)
+
+Now we can do a `docker login` to authenticate to the Docker Hosted repository on Nexus.
+
+![docker-login](https://github.com/Princeton45/nexus-docker-repo-setup/blob/main/images/login.png)
+
+### 8. Pushing an image to the repository
+
+I currently have an image in docker named `my-app:1.0` and I will retag the image to include the name of the Docker Hosted repository
+
+`docker tag my-app:1.0 146.190.78.188:8083/my-app:1.0`
+
+Then we can push to the repo:
+
+`docker push 146.190.78.188:8083/my-app:1.0`
+
+![docker-push](https://github.com/Princeton45/nexus-docker-repo-setup/blob/main/images/docker-push.png)
+
+Now we can see the image pushed to the Docker hosted repo in Nexus:
+
+![final](https://github.com/Princeton45/nexus-docker-repo-setup/blob/main/images/final.png)
